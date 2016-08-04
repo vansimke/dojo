@@ -6,6 +6,10 @@ define(['dojo/_base/declare', 'require'],
 
 			constructor: function () {
 				this._worker = new Worker(require.toUrl('./worker-script.js'));
+				this._worker.postMessage({
+					type: 'setWorkerId',
+					id: this.id
+				});
 			},
 
 			initializeDojo: function (config) {

@@ -12,18 +12,18 @@ define(['dojo/_base/declare',
         var workerId = 1;
 
         var Dispatcher = declare([], {
-            numWorkers: 10,
+            numWorkers: 1,
             workers: null,
             dojoConfig: null,
         
             constructor: function () {
-                this.workers = [];
+                this.workers = {};
 
                 var WorkerType = has('web-workers') ? AsyncWorker : SyncWorker;
 
                 for (var i = 0; i < this.numWorkers; i++) {
                     var worker = new WorkerType({id: workerId++});
-                    this.workers.push(worker);
+                    this._workers[worker.id] = worker;
                 }
 
                 this._initializeDojoInWorkers(this.dojoConfig);
@@ -36,11 +36,14 @@ define(['dojo/_base/declare',
                 array.forEach(this.workers, function (w) {
                     w.initializeDojo(config);
                 });
-            }
+            },
 
+            getWorkerById: function (id) {
+                return this._workers[id];
+            }
 
         });
 
-        return Dispatcher;
+        return new Dispatcher();
     }
 );

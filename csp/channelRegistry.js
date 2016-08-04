@@ -1,82 +1,52 @@
-define(['dojo/_base/declare'],
-	function (declare) {
-		var id = 1;
-
-		var Channel = declare([], {
-			id: 0,
-			_messages: null,
-			_pendingRequestors: null,
-			_pendingSenders: null,
-			maxQueueLength: 1,
-
-			constructor: function (args) {
-				if (args && args.id) {
-					this.id = args.id;
-				} else {
-					this.id -= '_channel_' + id++;
-				}
-
-				this._messages = [];
-				this._pendingRequestors = [];
-				this._pendingSenders = [];
-
-				registry.registerChannel(this);
-			},
-			put: function (msg) {
-				var d = new Deferred();
-				if (this._messages < this.maxQueueLength) {
-					this._messages.push(msg);
-					d.resolve();
-				} else {
-					this._pendingSenders.push({
-						msg: msg,
-						deferred: d
-					});
-				}
-
-				if (this._pendingRequestors.length > 0) {
-					var deferredRequest = this._pendingRequestors.shift();
-					deferredRequest.resolve(this._messages.unshift());
-				}
-
-				return d.promise;
-
-			},
-			get: function () {
-				var d = new Deferred();
-
-				if (this._messages.length > 0) {
-					d.resolve(this._messages.shift());
-				} else {
-					this._pendingRequestors.push(d);
-				}
-
-				if (this._pendingSenders.length > 0) {
-					var deferredSender = this._pendingSenders.shift();
-					this.put(deferredSender.msg);
-					deferredSender.deferred.resolve();
-				}
-
-				return d.promise;
-			}
-		});
-
+define(['dojo/_base/declare',
+	'./channel/MainThreadChannel',
+	'./channel/WorkerChannel',
+	'./Dispatcher',
+	'dojo/_base/lang'],
+	function (declare, MainThreadChannel, WorkerChannel,
+		Dispatcher, lang) {
+		var inMainThread = self instanceof Window;
+		
 		var Registry = declare([], {
 			_channels: null,
 
 			constructor: function () {
 				this._channels = {};
-			},
-			registerChannel: function (channel) {
-				this._channels[channel.id] = channel;
+				this.addEventListener('message', lang.hitch(this, 'messageListener'));
 			},
 			findById: function (id) {
-				return this._channels[channel.id]
-			},
+				var channel = this._channels[id];
+				if (!channel) {
+					if (inMainThread) {
+						this._channels[id] = new MainThreadChannel({id:id});
+					} else {
+						this._channels[id] = new WorkerChannel({id:id});
+					}
+				}
 
-			_inMainThread: function () {
-				return self instanceof Window 
+				return this._channels[id];
+			},
+			messageListener: function (e) {
+				if (e && e.data) {
+					if (inMainThread) {
+						switch (e.data.type) {
+							case 'putMessage': 
+								this.findById(e.data.channelId).putMessage(e.data.message)
+									.then(function () {
+										var worker = Dispatcher.getWorkerById(e.data.workerId);
+										worker.postMessage({
+											type: 'putMessageResponse',
+											workerId: worker.id,
+											channelId: e.data.channelId,
+											messageId: e.data.messageId
+										});
+									});
+								break;
+						}
+					}
+				}
 			}
+
 		});
 
 		return new Registry();

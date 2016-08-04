@@ -8,12 +8,14 @@ self.addEventListener('message', function (e) {
 			configDojo(e.data.config);
 			loadDojo();
 			break;
+		case 'setWorkerId':
+			self.workerId = e.data.id;
+			break;
 	} 
 });
 
 function configDojo(config) {
 	self.dojoConfig = config;
-	console.log(self.dojoConfig);
 }
 
 function loadDojo() {
