@@ -1,5 +1,6 @@
-define(['dojo/_base/declare'], 
-	function (declare) {
+define(['dojo/_base/declare', 
+	'dojo/Deferred'], 
+	function (declare, Deferred) {
 		var nextChannelId = 1,
 			nextMessageId = 1;
 

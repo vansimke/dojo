@@ -10,7 +10,8 @@ define(['dojo/_base/declare',
 			_pendingRequestors: null,
 			_pendingSenders: null,
 
-			constructor: function () {
+			constructor: function (args) {
+				this.channelId = args.id;
 				this._pendingRequestors = {};
 				this._pendingSenders = {};
 
@@ -21,6 +22,8 @@ define(['dojo/_base/declare',
 
 				var messageId = nextMessageId++;
 
+				this._pendingSenders[messageId] =  d;
+
 				global.postMessage({
 					type: 'putMessage',
 					workerId: global.workerId,
@@ -29,16 +32,24 @@ define(['dojo/_base/declare',
 					message: msg
 				});
 
-				this._pendingSenders[messageId] =  d;
-
 				return d.promise;
 			},
 
 			get: function () {
 				var d = new Deferred();
 
-				//TODO: this...
+				var messageId = nextMessageId++;
 
+				this._pendingRequestors[messageId] = d;
+
+				global.postMessage({
+					type: 'getMessage',
+					workerId: global.workerId,
+					channelId: this.channelId,
+					messageId: messageId
+				});
+
+				
 				return d.promise;
 			},
 			close: function () {
@@ -49,7 +60,13 @@ define(['dojo/_base/declare',
 				switch (message.type) {
 					case 'putMessageResponse':
 						if (this._pendingSenders[message.messageId]) {
-							this._pendingRequestors[message.messageId].resolve();
+							this._pendingSenders[message.messageId].resolve();
+							delete this._pendingSenders[message.messageId];
+						}
+						break;
+					case 'getMessageResponse':
+						if (this._pendingRequestors[message.messageId]) {
+							this._pendingRequestors[message.messageId].resolve(message.message);
 							delete this._pendingRequestors[message.messageId];
 						}
 						break;

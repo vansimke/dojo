@@ -20,4 +20,11 @@ function configDojo(config) {
 
 function loadDojo() {
 	importScripts([dojoConfig.baseUrl + '/dojo.js']);
+	require(['dojo/csp/channelRegistry'], function (channelRegistry) {
+		channelRegistry.findById('test1').put(42).then(function () {
+			channelRegistry.findById('test1').get().then(function (message) {
+				console.log(message);
+			});
+		});
+	});
 }

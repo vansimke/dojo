@@ -4,7 +4,8 @@ define(['dojo/_base/declare', 'require'],
 			id: 0,
 			_worker: null,
 
-			constructor: function () {
+			constructor: function (args) {
+				this.id = args.id;
 				this._worker = new Worker(require.toUrl('./worker-script.js'));
 				this._worker.postMessage({
 					type: 'setWorkerId',
@@ -17,6 +18,9 @@ define(['dojo/_base/declare', 'require'],
 					type: 'loadDojo',
 					config: config
 				});
+			},
+			postMessage: function (message) {
+				this._worker.postMessage(message);
 			}
 		});
 
