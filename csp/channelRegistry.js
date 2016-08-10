@@ -25,7 +25,7 @@ define(['dojo/_base/declare',
 				}
 				
 			},
-			findById: function (id) {
+			get: function (id) {
 				var channel = this._channels[id];
 				if (!channel) {
 					if (inMainThread) {
@@ -42,7 +42,7 @@ define(['dojo/_base/declare',
 				if (e && e.data) {
 					switch (e.data.type) {
 						case 'putMessage': 
-							this.findById(e.data.channelId).put(e.data.message)
+							this.get(e.data.channelId).put(e.data.message)
 								.then(function () {
 									var worker = Dispatcher.getWorkerById(e.data.workerId);
 									worker.postMessage({
@@ -54,7 +54,7 @@ define(['dojo/_base/declare',
 								});
 							break;
 						case 'getMessage':
-							this.findById(e.data.channelId).get()
+							this.get(e.data.channelId).get()
 								.then(function (message) {
 									var worker = Dispatcher.getWorkerById(e.data.workerId);
 									worker.postMessage({
@@ -68,7 +68,7 @@ define(['dojo/_base/declare',
 							break;
 						case 'putMessageResponse':
 						case 'getMessageResponse':
-							this.findById(e.data.channelId).processMessage(e.data);
+							this.get(e.data.channelId).processMessage(e.data);
 							break;
 					}
 				}

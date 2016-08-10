@@ -21,6 +21,14 @@ define(['dojo/_base/declare', 'require'],
 			},
 			postMessage: function (message) {
 				this._worker.postMessage(message);
+			},
+
+			startProcess: function (process) {
+				var functionBody = /\{([\s\S]*)\}/m.exec(process.toString())[1];
+				this._worker.postMessage({
+					type: 'startProcess',
+					body: functionBody
+				});
 			}
 		});
 

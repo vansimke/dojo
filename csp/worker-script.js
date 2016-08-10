@@ -2,7 +2,6 @@ self.addEventListener('message', function (e) {
 	if (!e || !e.data || !e.data.type) {
 		return;
 	}
-
 	switch (e.data.type) {
 		case 'loadDojo': 
 			configDojo(e.data.config);
@@ -11,6 +10,8 @@ self.addEventListener('message', function (e) {
 		case 'setWorkerId':
 			self.workerId = e.data.id;
 			break;
+		case 'startProcess':
+			startProcess(e.data.body);
 	} 
 });
 
@@ -20,11 +21,9 @@ function configDojo(config) {
 
 function loadDojo() {
 	importScripts([dojoConfig.baseUrl + '/dojo.js']);
-	require(['dojo/csp/channelRegistry'], function (channelRegistry) {
-		channelRegistry.findById('test1').put(42).then(function () {
-			channelRegistry.findById('test1').get().then(function (message) {
-				console.log(message);
-			});
-		});
-	});
+}
+
+function startProcess(functionBody) {
+	var f = new Function(functionBody);
+	f();
 }

@@ -5,6 +5,10 @@ define(['dojo/_base/declare'],
 
 			initializeDojo: function () {
 				//no op since Dojo is already initialized in host environment
+			},
+
+			startProcess: function (process) {
+				
 			}
 		});
 
